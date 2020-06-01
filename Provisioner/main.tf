@@ -1,27 +1,12 @@
+resource "aws_key_pair" "firstkey" {
+  key_name = "firstkey"
+  public_key = file(var.pub_key)  
+}
+
 resource "aws_instance" "test1" {
   ami = lookup(var.AMIS, var.region)
   instance_type = "t2.micro"
-  key_name = "pro_key"
-}
-
-resource "aws_eip" "eip" {
-  instance = "aws_instance.test1.id"
-}
-
-output "myeip" {
-  value = "aws_eip.eip.public_ip"
-}
-
-resource "null_resource" "ssh_connection" {
-  connection {
-    host = "aws_eip.eip.pubic_ip"
-    type = "ssh"
-    port = 22
-    user = "ec2-user"
-    private_key = file(pro_key.pem)
-    timeout = "1m"
-    agent = "false"
-  }
+  key_name = aws_key_pair.firstkey.key_name
 
   Provisioner "file" {
       source = "wordpress.sh"
@@ -35,5 +20,10 @@ resource "null_resource" "ssh_connection" {
       "sudo /tmp/wordpress.sh",
     ]
 
+  }
+
+  connection {
+    user = "ec2-user"
+    private_key = file(var.pri_key)
   }
 }
